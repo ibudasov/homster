@@ -3,6 +3,7 @@
 console.log('Loading function');
 
 let AWS = require('aws-sdk');
+let uuid = require('node-uuid');
 let db = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
 let tableName = 'homster';
 let done = (err, res) => callback(null, {
@@ -50,7 +51,7 @@ let changeController = {
     post: function () {
 
         let changeObject = {
-            id: Date.now().toString(),
+            id: uuid.v1(),
             deviceType: "undefined",
             userId: "someString",
             timeCreated: Date.now().toString()
