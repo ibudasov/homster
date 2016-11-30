@@ -1,0 +1,8 @@
+{
+  "name": "homster",
+  "description": "Make your home great again!",
+  "memory": 128,
+  "timeout": 5,
+  "role": "arn:aws:iam::104225645171:role/homster_lambda_function",
+  "environment": {}
+}

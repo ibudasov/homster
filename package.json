@@ -1,0 +1,11 @@
+{
+  "name": "homster",
+  "version": "1.0.0",
+  "description": "Makes your home great again",
+  "main": "functions/change/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ibudasov",
+  "license": "ISC"
+}
