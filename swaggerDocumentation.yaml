@@ -1,0 +1,103 @@
+---
+swagger: "2.0"
+info:
+  version: "2016-12-04T16:56:12Z"
+  title: "HomsterAPI"
+host: "noc7s649hh.execute-api.eu-west-1.amazonaws.com"
+basePath: "/prod"
+schemes:
+- "https"
+paths:
+  /:
+    get:
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: "200"
+        uri: "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:104225645171:function:hereWeGo/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws"
+  /change:
+    get:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "TableName"
+        in: "query"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: "200"
+        requestTemplates:
+          application/json: "{\n    \"timestampFrom\": \"$input.params('timestampFrom')\"\
+            ,\n    \"timestampTo\": \"$input.params('timestampTo')\",\n    \"httpMethod\"\
+            : \"$context.httpMethod\"\n}"
+        uri: "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:104225645171:function:homster_change/invocations"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws"
+    post:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "Change"
+        required: true
+        schema:
+          $ref: "#/definitions/Change"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: "200"
+        requestTemplates:
+          application/json: "#set($inputRoot = $input.path('$'))\n{\n    \"httpMethod\"\
+            : \"$context.httpMethod\",\n  \"timestampReceived\" : \"foo\",\n  \"deviceType\"\
+            \ : \"foo\",\n  \"userId\" : \"foo\",\n  \"payload\" : { }\n}"
+        uri: "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:104225645171:function:homster_change/invocations"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws"
+definitions:
+  Empty:
+    type: "object"
+    title: "Empty Schema"
+  Change:
+    type: "object"
+    properties:
+      timestampReceived:
+        type: "string"
+      deviceType:
+        type: "string"
+      userId:
+        type: "string"
+      payload:
+        type: "object"
+        properties: {}
+    title: "Change Schema"
