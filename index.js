@@ -30,17 +30,6 @@ exports.handle = (event, context, callback) => {
     }
 };
 
-
-let changeObject = {
-    id: uuid.v1(),
-    timestampReceived: Date.now().toString(),
-    deviceType: 'qwertyui',
-    userId: 'werty',
-    payload: {
-        qwert: 'qwert'
-    }
-};
-
 let changeController = {
 
     /**
@@ -74,21 +63,26 @@ let changeController = {
         })
     },
 
-    post: function () {
+    post: function (event, context, response) {
+        let changeObject = {
+            id: uuid.v1(),
+            timestampReceived: Date.now().toString(),
+            deviceType: event.deviceType,
+            userId: event.deviceType,
+            payload: event.payload
+        };
 
         db.put({
             Item: changeObject,
             TableName: tableName
         }, function (err, data) {
             if (err) {
-                callback(err, null);
+                response(err, null);
             } else {
-                callback(null, data);
+                response(null, {'message': 'Change data has been successfully saved'});
             }
         })
-
-    },
-
+    }
 };
 
 let guardTimestampFrom = function (event, callback) {
