@@ -4,8 +4,16 @@ console.log('Loading function');
 
 let AWS = require('aws-sdk');
 let uuid = require('node-uuid');
-let db = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
+let documentDB = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
 let tableName = 'homster';
+
+let relationalDB = require('mysql');
+var connection = relationalDB.createConnection({
+    host     : 'homster.cpafon41kldv.eu-west-1.rds.amazonaws.com',
+    user     : 'homsterUser',
+    password : 'homsterPass',
+    port     : '3306'
+});
 
 exports.handle = (event, context, callback) => {
 
@@ -45,7 +53,7 @@ let changeController = {
         let timestampFrom = guardTimestampFrom(event, response);
         let timestampTo = guardTimestampTo(event, response);
 
-        db.scan({
+        documentDB.scan({
             Limit: 100,
             TableName: tableName,
             ScanFilter: {
@@ -71,17 +79,31 @@ let changeController = {
             userId: event.deviceType,
             payload: event.payload
         };
+        var responseMessage = {};
 
-        db.put({
+
+        // let sql = 'INSERT INTO change SET timestampReceived = ' + changeObject.timestampReceived;
+        // connection.query(sql, function(err, rows) {
+        //     if (err) {
+        //         response(err, null);
+        //     } else {
+        //         responseMessage.relationalDB = "Saved";
+        //     }
+        // });
+
+
+        documentDB.put({
             Item: changeObject,
             TableName: tableName
         }, function (err, data) {
             if (err) {
                 response(err, null);
             } else {
-                response(null, {'message': 'Change data has been successfully saved'});
+                responseMessage.documentDB = "Saved";
             }
-        })
+        });
+
+        response(null, responseMessage);
     }
 };
 
