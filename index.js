@@ -73,8 +73,8 @@ let changeController = {
 
     post: function (request, context, response) {
         var responseMessage = {
-            "success": "ok",
-            "rawRequestHasBeenSaved": saveRawRequest(request, response)
+            "success": "ok"
+            , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
         };
 
         // let sql = 'INSERT INTO change SET timestampReceived = ' + changeObject.timestampReceived;
@@ -106,9 +106,10 @@ let guardTimestampTo = function (request, response) {
     }
 };
 
-let saveRawRequest = function (request, response) {
+let saveRawRequest = function (whatToSave, response) {
+    whatToSave.id = uuid.v4();
     documentDB.put({
-        Item: request.body,
+        Item: whatToSave,
         TableName: tableName
     }, function (err, data) {
         if (err) {
