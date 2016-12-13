@@ -15,9 +15,9 @@ var connection = relationalDB.createConnection({
     port     : '3306'
 });
 
-exports.handle = (event, context, callback) => {
+exports.handle = (request, context, response) => {
 
-    let done = (err, res) => callback(null, {
+    let done = (err, res) => response(null, {
         statusCode: err ? '400' : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
@@ -25,16 +25,16 @@ exports.handle = (event, context, callback) => {
         },
     });
 
-    switch (event.httpMethod) {
+    switch (request.httpMethod) {
         case 'GET':
-            changeController.get(event, context, callback);
+            changeController.get(request, context, response);
             break;
         case 'POST':
-            changeController.post(event, context, callback);
+            changeController.post(request, context, response);
             break;
         default:
             console.log('default');
-            done(new Error(`Unsupported method "${event.httpMethod}"`));
+            done(new Error(`Unsupported method "${request.httpMethod}"`));
     }
 };
 
@@ -44,14 +44,14 @@ let changeController = {
      * Returns changes between two dates -- timestampFrom and timestampTo.
      * These timestamps are required, because otherwise response will be too big
      *
-     * @param event
+     * @param request
      * @param context
      * @param response
      */
-    get: function (event, context, response) {
+    get: function (request, context, response) {
 
-        let timestampFrom = guardTimestampFrom(event, response);
-        let timestampTo = guardTimestampTo(event, response);
+        let timestampFrom = guardTimestampFrom(request, response);
+        let timestampTo = guardTimestampTo(request, response);
 
         documentDB.scan({
             Limit: 100,
@@ -71,16 +71,11 @@ let changeController = {
         })
     },
 
-    post: function (event, context, response) {
-        let changeObject = {
-            id: uuid.v1(),
-            timestampReceived: Date.now().toString(),
-            deviceType: event.deviceType,
-            userId: event.deviceType,
-            payload: event.payload
+    post: function (request, context, response) {
+        var responseMessage = {
+            "success": "ok",
+            "rawRequestHasBeenSaved": saveRawRequest(request, response)
         };
-        var responseMessage = {};
-
 
         // let sql = 'INSERT INTO change SET timestampReceived = ' + changeObject.timestampReceived;
         // connection.query(sql, function(err, rows) {
@@ -91,34 +86,35 @@ let changeController = {
         //     }
         // });
 
-
-        documentDB.put({
-            Item: changeObject,
-            TableName: tableName
-        }, function (err, data) {
-            if (err) {
-                response(err, null);
-            } else {
-                responseMessage.documentDB = "Saved";
-            }
-        });
-
         response(null, responseMessage);
     }
 };
 
-let guardTimestampFrom = function (event, callback) {
-    if (event.timestampFrom.length !== 0) {
-        return event.timestampFrom;
+let guardTimestampFrom = function (request, response) {
+    if (request.timestampFrom.length !== 0) {
+        return request.timestampFrom;
     } else {
-        callback('timestampFrom is required', null);
+        response('timestampFrom is required', null);
     }
 };
 
-let guardTimestampTo = function (event, callback) {
-    if (event.timestampTo.length !== 0) {
-        return event.timestampTo;
+let guardTimestampTo = function (request, response) {
+    if (request.timestampTo.length !== 0) {
+        return request.timestampTo;
     } else {
-        callback('timestampTo is required', null);
+        response('timestampTo is required', null);
     }
 };
+
+let saveRawRequest = function (request, response) {
+    documentDB.put({
+        Item: request.body,
+        TableName: tableName
+    }, function (err, data) {
+        if (err) {
+            response(err, null);
+        }
+    });
+    return 'ok';
+};
+
