@@ -73,10 +73,15 @@ let changeController = {
     },
 
     post: function (request, context, response) {
+
+        // TODO: here suppose to be a factory, in order to support a few input types
+        let dataForStatistics = dataMapper(request);
+
         var responseMessage = {
             "success": "ok"
             , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
-            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(request.body, response)
+            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response)
+            , "dataForStatistics": dataForStatistics
         };
         response(null, responseMessage);
     }
@@ -125,3 +130,12 @@ let saveDataForStatistics = function (whatToSave, response) {
     return 'ok';
 };
 
+let dataMapper = function(rawRequest) {
+    var result = {};
+
+    if(rawRequest.body.userId.length !== 0) {
+        result.userId = rawRequest.body.userId.length;
+    }
+
+    return result;
+};
