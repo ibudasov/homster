@@ -9,10 +9,11 @@ let tableName = 'homster';
 
 let relationalDB = require('mysql');
 var connection = relationalDB.createConnection({
-    host     : 'homster.cpafon41kldv.eu-west-1.rds.amazonaws.com',
-    user     : 'homsterUser',
-    password : 'homsterPass',
-    port     : '3306'
+    host: 'homster.cpafon41kldv.eu-west-1.rds.amazonaws.com',
+    user: 'homsterUser',
+    password: 'homsterPass',
+    port: '3306',
+    database: 'homster'
 });
 
 exports.handle = (request, context, response) => {
@@ -75,17 +76,8 @@ let changeController = {
         var responseMessage = {
             "success": "ok"
             , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
+            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(request.body, response)
         };
-
-        // let sql = 'INSERT INTO change SET timestampReceived = ' + changeObject.timestampReceived;
-        // connection.query(sql, function(err, rows) {
-        //     if (err) {
-        //         response(err, null);
-        //     } else {
-        //         responseMessage.relationalDB = "Saved";
-        //     }
-        // });
-
         response(null, responseMessage);
     }
 };
@@ -114,6 +106,20 @@ let saveRawRequest = function (whatToSave, response) {
     }, function (err, data) {
         if (err) {
             response(err, null);
+        }
+    });
+    return 'ok';
+};
+
+let saveDataForStatistics = function (whatToSave, response) {
+    connection.query('INSERT INTO homster SET timestampReceived = 11', function (error, results, fields) {
+        if (error) {
+            response(error, null);
+        }
+    });
+    connection.end(function (error) {
+        if (error) {
+            response(error, null);
         }
     });
     return 'ok';
