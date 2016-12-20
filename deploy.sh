@@ -13,3 +13,5 @@ aws lambda update-function-code --function-name homster_change --zip-file fileb:
 
 # let's call it clean up
 rm ${PROJECT_DIRECTORY}/homster_change.zip
+
+echo Deployed.
