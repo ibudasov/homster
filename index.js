@@ -18,15 +18,18 @@ var connection = relationalDB.createConnection({
 
 exports.handle = (request, context, response) => {
 
+    let httpMethod = request.context.httpMethod;
+
     let done = (err, res) => response(null, {
         statusCode: err ? '400' : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
             'Content-Type': 'application/json',
         },
+        request: httpMethod
     });
 
-    switch (request.httpMethod) {
+    switch (httpMethod) {
         case 'GET':
             changeController.get(request, context, response);
             break;
@@ -35,7 +38,7 @@ exports.handle = (request, context, response) => {
             break;
         default:
             console.log('default');
-            done(new Error(`Unsupported method "${request.httpMethod}"`));
+            done(new Error(`Unsupported method "${httpMethod}"`));
     }
 };
 
@@ -74,14 +77,16 @@ let changeController = {
 
     post: function (request, context, response) {
 
+        request.body = JSON.parse(request.body);
         // TODO: here suppose to be a factory, in order to support a few input types
-        let dataForStatistics = dataMapper(request);
+        var dataForStatistics = dataMapper(request);
 
         var responseMessage = {
             "success": "ok"
             , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
             , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response)
             , "dataForStatistics": dataForStatistics
+            , "dataRaw": request
         };
         response(null, responseMessage);
     }
@@ -104,7 +109,9 @@ let guardTimestampTo = function (request, response) {
 };
 
 let saveRawRequest = function (whatToSave, response) {
+
     whatToSave.id = uuid.v4();
+
     documentDB.put({
         Item: whatToSave,
         TableName: tableName
@@ -130,12 +137,21 @@ let saveDataForStatistics = function (whatToSave, response) {
     return 'ok';
 };
 
-let dataMapper = function(rawRequest) {
+let dataMapper = function (rawRequest) {
     var result = {};
 
-    if(rawRequest.body.userId.length !== 0) {
+
+    if ((typeof rawRequest.body.userId !== 'undefined') && (rawRequest.body.userId.length !== 0)) {
         result.userId = rawRequest.body.userId.length;
     }
 
     return result;
 };
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+    }
+    return copy;
+}

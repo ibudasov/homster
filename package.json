@@ -12,5 +12,8 @@
     "mysql": "^2.12.0",
     "node-uuid": "^1.4.7",
     "node-watch": "^0.4.1"
+  },
+  "devDependencies": {
+    "request": "^2.79.0"
   }
 }

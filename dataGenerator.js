@@ -32,9 +32,8 @@ let dataSample = {
         "haveOTBoiler": 0
     }
 };
-
-let numberOfDaysInMonth = 30;
-let numberOfHours = 24;
+let numberOfDaysInMonth = 2;
+let numberOfHours = 2;
 let programState = [
     {
         'name': 'away',
@@ -80,29 +79,20 @@ let hoursMapping = [
         'preferrableTemprature': programState[1].temperature //sleep
     },
 ]
-
 let getRandomTemperature = function (hour) {
 
     let preferrableTemprature = 0;
-    for(timeIntervalKey in hoursMapping) {
+    for (timeIntervalKey in hoursMapping) {
         let startHour = hoursMapping[timeIntervalKey].startHour;
         let endHour = hoursMapping[timeIntervalKey].endHour;
-
-        if((hour <= endHour) && (hour >= startHour)) {
+        if ((hour <= endHour) && (hour >= startHour)) {
             preferrableTemprature = hoursMapping[timeIntervalKey].preferrableTemprature;
-            // console.log(preferrableTemprature);
-            continue;
         }
     }
     let temtretureIntervalLow = preferrableTemprature - 2;
     let temtretureIntervalHigh = preferrableTemprature + 2;
-    let result = Math.floor(((Math.random() * temtretureIntervalHigh) + temtretureIntervalLow) * 100);
-
-    // console.log(result);
-
-    return result;
+    return Math.floor(((Math.random() * temtretureIntervalHigh) + temtretureIntervalLow) * 100);
 };
-
 let dataGenerator = function () {
     var generatedData = [];
     for (date = 1; date < numberOfDaysInMonth; date++) {
@@ -116,8 +106,6 @@ let dataGenerator = function () {
     }
     return generatedData;
 };
-console.log(dataGenerator());
-
 function clone(obj) {
     if (null == obj || "object" != typeof obj) return obj;
     var copy = obj.constructor();
@@ -126,3 +114,6 @@ function clone(obj) {
     }
     return copy;
 }
+// console.log(dataGenerator());
+
+module.exports = dataGenerator();
