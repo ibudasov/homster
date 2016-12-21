@@ -1,12 +1,11 @@
 'use strict';
 
-console.log('Loading function');
-
 let AWS = require('aws-sdk');
 let uuid = require('node-uuid');
 let documentDB = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
-let tableName = 'homster';
 
+// @todo: move this to src/config
+let tableName = 'homster';
 let relationalDB = require('mysql');
 var connection = relationalDB.createConnection({
     host: 'homster.cpafon41kldv.eu-west-1.rds.amazonaws.com',
@@ -16,6 +15,7 @@ var connection = relationalDB.createConnection({
     database: 'homster'
 });
 
+// @todo: move this to src/router
 exports.handle = (request, context, response) => {
 
     let httpMethod = request.context.httpMethod;
@@ -42,6 +42,7 @@ exports.handle = (request, context, response) => {
     }
 };
 
+// @todo: move this to src/controller
 let changeController = {
 
     /**
@@ -77,7 +78,10 @@ let changeController = {
 
     post: function (request, context, response) {
 
-        request.body = JSON.parse(request.body);
+        if (typeof request.body == 'string') {
+            request.body = JSON.parse(request.body);
+        }
+
         // TODO: here suppose to be a factory, in order to support a few input types
         var dataForStatistics = dataMapper(request);
 
@@ -86,7 +90,6 @@ let changeController = {
             , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
             , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response)
             , "dataForStatistics": dataForStatistics
-            , "dataRaw": request
         };
         response(null, responseMessage);
     }
@@ -123,12 +126,22 @@ let saveRawRequest = function (whatToSave, response) {
     return 'ok';
 };
 
+// @todo: convert saving temperature to proper format
 let saveDataForStatistics = function (whatToSave, response) {
-    connection.query('INSERT INTO homster SET timestampReceived = 11', function (error, results, fields) {
-        if (error) {
-            response(error, null);
-        }
-    });
+    // INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
+    connection.query('INSERT ' +
+        ' INTO homster ' +
+        ' (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp) ' +
+        ' VALUES (' +
+        Math.floor(Date.now() / 1000) + ', ' +
+        whatToSave.currentTemp + ', ' +
+        whatToSave.currentSetpoint + ', ' +
+        whatToSave.currentDisplayTemp + ')'
+        , function (error, results, fields) {
+            if (error) {
+                response(error, null);
+            }
+        });
     connection.end(function (error) {
         if (error) {
             response(error, null);
@@ -140,18 +153,16 @@ let saveDataForStatistics = function (whatToSave, response) {
 let dataMapper = function (rawRequest) {
     var result = {};
 
-
-    if ((typeof rawRequest.body.userId !== 'undefined') && (rawRequest.body.userId.length !== 0)) {
-        result.userId = rawRequest.body.userId.length;
-    }
+    result.currentTemp = get(rawRequest.body, 'thermostatInfo.currentTemp');
+    result.currentSetpoint = get(rawRequest.body, 'thermostatInfo.currentSetpoint');
+    result.currentDisplayTemp = get(rawRequest.body, 'thermostatInfo.currentDisplayTemp');
 
     return result;
 };
-function clone(obj) {
-    if (null == obj || "object" != typeof obj) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
-    }
-    return copy;
-}
+
+let get = function (obj, key) {
+    return key.split(".").reduce(function (o, x) {
+        return (typeof o == "undefined" || o === null) ? o : o[x];
+    }, obj);
+};
+

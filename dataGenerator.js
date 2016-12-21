@@ -79,20 +79,21 @@ let hoursMapping = [
         'preferrableTemprature': programState[1].temperature //sleep
     },
 ]
-let getRandomTemperature = function (hour) {
-
-    let preferrableTemprature = 0;
+var getRandomTemperature = function (hour) {
+    var preferrableTemprature = 0;
     for (timeIntervalKey in hoursMapping) {
-        let startHour = hoursMapping[timeIntervalKey].startHour;
-        let endHour = hoursMapping[timeIntervalKey].endHour;
+        var startHour = hoursMapping[timeIntervalKey].startHour;
+        var endHour = hoursMapping[timeIntervalKey].endHour;
         if ((hour <= endHour) && (hour >= startHour)) {
             preferrableTemprature = hoursMapping[timeIntervalKey].preferrableTemprature;
         }
     }
-    let temtretureIntervalLow = preferrableTemprature - 2;
-    let temtretureIntervalHigh = preferrableTemprature + 2;
+    var temtretureIntervalLow = preferrableTemprature - 2;
+    var temtretureIntervalHigh = preferrableTemprature + 2;
     return Math.floor(((Math.random() * temtretureIntervalHigh) + temtretureIntervalLow) * 100);
 };
+
+    // @todo: generates the same data for every data part. Fix it.
 let dataGenerator = function () {
     var generatedData = [];
     for (date = 1; date < numberOfDaysInMonth; date++) {
@@ -102,8 +103,10 @@ let dataGenerator = function () {
             dataPart.thermostatInfo.currentSetpoint = getRandomTemperature(hour);
             dataPart.thermostatInfo.currentDisplayTemp = getRandomTemperature(hour);
             generatedData.push(dataPart);
+            delete dataPart;
         }
     }
+    console.log(generatedData);
     return generatedData;
 };
 function clone(obj) {
