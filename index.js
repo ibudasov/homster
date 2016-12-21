@@ -83,13 +83,17 @@ let changeController = {
         }
 
         // TODO: here suppose to be a factory, in order to support a few input types
-        var dataForStatistics = dataMapper(request);
+        // var dataForStatistics = dataMapper(request);
+        var dataForStatistics = {
+            timestampReceived: 9999,
+            currentTemp: 9999,
+            currentSetpoint: 9999,
+            currentDisplayTemp: 9999
+        };
 
         var responseMessage = {
-            "success": "ok"
-            , "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
+            "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
             , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response)
-            , "dataForStatistics": dataForStatistics
         };
         response(null, responseMessage);
     }
@@ -129,24 +133,23 @@ let saveRawRequest = function (whatToSave, response) {
 // @todo: convert saving temperature to proper format
 let saveDataForStatistics = function (whatToSave, response) {
     // INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
-    connection.query('INSERT ' +
-        ' INTO homster ' +
-        ' (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp) ' +
-        ' VALUES (' +
-        Math.floor(Date.now() / 1000) + ', ' +
-        whatToSave.currentTemp + ', ' +
-        whatToSave.currentSetpoint + ', ' +
-        whatToSave.currentDisplayTemp + ')'
-        , function (error, results, fields) {
+    var query = connection.query(
+        'INSERT INTO homster (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp)  VALUES (?, ?, ?, ?)',
+        [Math.floor(Date.now() / 1000), whatToSave.currentTemp, whatToSave.currentSetpoint, whatToSave.currentDisplayTemp],
+        function (error, data, fields) {
             if (error) {
                 response(error, null);
             }
+            console.log({data: data});
+            console.log({fields: fields});
+
+            connection.end(function (error, data) {
+                if (error) {
+                    response(error, null);
+                }
+            });
         });
-    connection.end(function (error) {
-        if (error) {
-            response(error, null);
-        }
-    });
+    console.log(query.sql);
     return 'ok';
 };
 

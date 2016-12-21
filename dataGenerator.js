@@ -32,8 +32,6 @@ let dataSample = {
         "haveOTBoiler": 0
     }
 };
-let numberOfDaysInMonth = 2;
-let numberOfHours = 2;
 let programState = [
     {
         'name': 'away',
@@ -94,29 +92,25 @@ var getRandomTemperature = function (hour) {
 };
 
     // @todo: generates the same data for every data part. Fix it.
+let numberOfDaysInMonth = 2;
+let numberOfHours = 2;
 let dataGenerator = function () {
     var generatedData = [];
-    for (date = 1; date < numberOfDaysInMonth; date++) {
+    var i = 0;
+    for (date = 0; date < numberOfDaysInMonth; date++) {
         for (hour = 0; hour < numberOfHours; hour++) {
-            var dataPart = clone(dataSample);
-            dataPart.thermostatInfo.currentTemp = getRandomTemperature(hour);
-            dataPart.thermostatInfo.currentSetpoint = getRandomTemperature(hour);
-            dataPart.thermostatInfo.currentDisplayTemp = getRandomTemperature(hour);
-            generatedData.push(dataPart);
-            delete dataPart;
+            i++;
+            generatedData[i] = clone(dataSample);
+            generatedData[i].thermostatInfo.currentTemp = getRandomTemperature(hour);
+            generatedData[i].thermostatInfo.currentSetpoint = getRandomTemperature(hour);
+            generatedData[i].thermostatInfo.currentDisplayTemp = getRandomTemperature(hour);
         }
     }
-    console.log(generatedData);
     return generatedData;
 };
-function clone(obj) {
-    if (null == obj || "object" != typeof obj) return obj;
-    var copy = obj.constructor();
-    for (var attr in obj) {
-        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
-    }
-    return copy;
+
+function clone(source) {
+    return JSON.parse(JSON.stringify(source));
 }
-// console.log(dataGenerator());
 
 module.exports = dataGenerator();

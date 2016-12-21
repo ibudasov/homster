@@ -10,10 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "mysql": "^2.12.0",
-    "node-uuid": "^1.4.7",
-    "node-watch": "^0.4.1"
+    "node-uuid": "^1.4.7"
   },
   "devDependencies": {
+    "node-watch": "^0.4.1",
     "request": "^2.79.0"
   }
 }
