@@ -28,17 +28,19 @@ exports.handle = (request, context, response) => {
         },
         request: httpMethod
     });
-
-    switch (httpMethod) {
-        case 'GET':
-            changeController.get(request, context, response);
-            break;
-        case 'POST':
-            changeController.post(request, context, response);
-            break;
-        default:
-            console.log('default');
-            done(new Error(`Unsupported method "${httpMethod}"`));
+    try {
+        switch (httpMethod) {
+            case 'GET':
+                changeController.get(request, context, response);
+                break;
+            case 'POST':
+                changeController.post(request, context, response);
+                break;
+            default:
+                done(new Error(`Unsupported method "${httpMethod}"`));
+        }
+    } catch (error) {
+        done(new Error(error));
     }
 };
 
