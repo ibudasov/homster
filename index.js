@@ -95,7 +95,9 @@ let changeController = {
 
         var responseMessage = {
             "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
-            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response)
+            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response).then(function(data){
+                return 'ok';
+            })
         };
         response(null, responseMessage);
     }
@@ -135,24 +137,25 @@ let saveRawRequest = function (whatToSave, response) {
 // @todo: convert saving temperature to proper format
 let saveDataForStatistics = function (whatToSave, response) {
     // INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
-    var query = connection.query(
-        'INSERT INTO homster (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp)  VALUES (?, ?, ?, ?)',
-        [Math.floor(Date.now() / 1000), whatToSave.currentTemp, whatToSave.currentSetpoint, whatToSave.currentDisplayTemp],
-        function (error, data, fields) {
-            if (error) {
-                response(error, null);
-            }
-            console.log({data: data});
-            console.log({fields: fields});
 
-            connection.end(function (error, data) {
+    return new Promise(function (fulfill, reject) {
+        connection.query(
+            'INSERT INTO homster (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp)  VALUES (?, ?, ?, ?)',
+            [Math.floor(Date.now() / 1000), whatToSave.currentTemp, whatToSave.currentSetpoint, whatToSave.currentDisplayTemp],
+            function (error, data, fields) {
                 if (error) {
-                    response(error, null);
+                    reject(error);
+                }
+                else {
+                    connection.end(function (error, data) {
+                        if (error) {
+                            response(error, null);
+                        }
+                    });
+                    fulfill(data);
                 }
             });
-        });
-    console.log(query.sql);
-    return 'ok';
+    });
 };
 
 let dataMapper = function (rawRequest) {
