@@ -101,8 +101,11 @@ let changeController = {
 
         Promise.all([
             saveRawRequest(request.body),
-            // ChangeModel.findAndCountAll(),
+            ChangeModel.create(dataForStatistics),
         ]).then((values) => {
+            log('connection-before', sequelize);
+            sequelize.close();
+            log('connection-after', sequelize);
             return response(null, values);
         }).catch(error => {
             return response(error, null);
@@ -160,3 +163,9 @@ let get = function (obj, key) {
     }, obj);
 };
 
+
+
+let log = function (what, input) {
+    let description = '----TRACE--- ' + what + ' --';
+    console.log({'----TRACE--- ': input});
+}
