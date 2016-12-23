@@ -41,10 +41,10 @@ exports.handle = (request, context, response) => {
     try {
         switch (httpMethod) {
             case 'GET':
-                changeController.httpGet(request, context, response);
+                changeController.httpGet(request, context);
                 break;
             case 'POST':
-                changeController.httpPost(request, context, response);
+                changeController.httpPost(request, context);
                 break;
             default:
                 done(new Error(`Unsupported method "${httpMethod}"`));
@@ -74,17 +74,17 @@ let changeController = {
             Limit: 100,
             TableName: tableName,
             ScanFilter: {
-                "timestampReceived": {
-                    AttributeValueList: [timestampFrom],
-                    ComparisonOperator: "GT"
-                }
+                // "timestampReceived": {
+                //     AttributeValueList: [timestampFrom],
+                //     ComparisonOperator: "GT"
+                // }
             }
         }, function (err, data) {
             if (err) {
                 context.fail(err);
             }
             context.succeed(data);
-        })
+        });
     },
 
     httpPost: function (request, context) {
@@ -99,9 +99,11 @@ let changeController = {
         Promise.all([
             saveRawRequest(request.body),
             ChangeModel.create(dataForStatistics),
-        ]).then((values) => {
-            // return response(null, values);
-            return context.succeed(values);
+        ]).then((result) => {
+            return context.succeed({
+                "rawRequestHasBeenSaved": result[0],
+                "statisticsDataHasBeenSaved": result[1]
+            });
         }).catch(error => {
             return context.fail(error);
         });
