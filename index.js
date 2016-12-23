@@ -1,11 +1,29 @@
 'use strict';
 
 let AWS = require('aws-sdk');
-let uuid = require('node-uuid');
+// ----------
 let documentDB = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
+let uuid = require('node-uuid');
+var tableName = 'homster';
+// ----------
 var Sequelize = require('sequelize');
 var sequelize = new Sequelize('mysql://homsterUser:homsterPass@homster.cpafon41kldv.eu-west-1.rds.amazonaws.com:3306/homster');
-var tableName = 'homster';
+var ChangeModel = sequelize.define('change', {
+    currentTemp: {
+        type: Sequelize.INTEGER,
+        field: 'currentTemp'
+    },
+    currentSetpoint: {
+        type: Sequelize.INTEGER,
+        field: 'currentSetpoint'
+    },
+    currentDisplayTemp: {
+        type: Sequelize.INTEGER,
+        field: 'currentDisplayTemp'
+    }
+}, {
+    freezeTableName: true // Model tableName will be the same as the model name
+});
 
 // @todo: move this to src/config
 
@@ -83,6 +101,7 @@ let changeController = {
 
         Promise.all([
             saveRawRequest(request.body),
+            // ChangeModel.findAndCountAll(),
         ]).then((values) => {
             return response(null, values);
         }).catch(error => {
@@ -124,27 +143,6 @@ let saveRawRequest = function (whatToSave) {
 };
 
 // @todo: convert saving temperature to proper format
-// let saveDataForStatistics = function (whatToSave) {
-//     var User = sequelize.define('user', {
-//         firstName: {
-//             type: Sequelize.STRING,
-//             field: 'first_name' // Will result in an attribute that is firstName when user facing but first_name in the database
-//         },
-//         lastName: {
-//             type: Sequelize.STRING
-//         }
-//     }, {
-//         freezeTableName: true // Model tableName will be the same as the model name
-//     });
-//
-//     User.sync({force: true}).then(function () {
-//         Table created
-// return User.create({
-//     firstName: 'John',
-//     lastName: 'Hancock'
-// });
-// });
-// };
 
 let dataMapper = function (rawRequest) {
     var result = {};
