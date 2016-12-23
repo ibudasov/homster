@@ -25,14 +25,12 @@ var ChangeModel = sequelize.define('change', {
     freezeTableName: true // Model tableName will be the same as the model name
 });
 
-// @todo: move this to src/config
-
 // @todo: move this to src/router
 exports.handle = (request, context, response) => {
 
     let httpMethod = request.context.httpMethod;
 
-    let done = (err, res) => response(null, {
+    let done = (err, res) => context.done(null, {
         statusCode: err ? '400' : '200',
         body: err ? err.message : JSON.stringify(res),
         headers: {
@@ -43,10 +41,10 @@ exports.handle = (request, context, response) => {
     try {
         switch (httpMethod) {
             case 'GET':
-                changeController.get(request, context, response);
+                changeController.httpGet(request, context, response);
                 break;
             case 'POST':
-                changeController.post(request, context, response);
+                changeController.httpPost(request, context, response);
                 break;
             default:
                 done(new Error(`Unsupported method "${httpMethod}"`));
@@ -55,6 +53,7 @@ exports.handle = (request, context, response) => {
         done(new Error(error));
     }
 };
+
 
 // @todo: move this to src/controller
 let changeController = {
@@ -65,12 +64,11 @@ let changeController = {
      *
      * @param request
      * @param context
-     * @param response
      */
-    get: function (request, context, response) {
+    httpGet: function (request, context) {
 
-        let timestampFrom = guardTimestampFrom(request, response);
-        let timestampTo = guardTimestampTo(request, response);
+        let timestampFrom = guardTimestampFrom(request, context);
+        let timestampTo = guardTimestampTo(request, context);
 
         documentDB.scan({
             Limit: 100,
@@ -83,14 +81,13 @@ let changeController = {
             }
         }, function (err, data) {
             if (err) {
-                response(err, null);
-            } else {
-                response(null, data);
+                context.fail(err);
             }
+            context.succeed(data);
         })
     },
 
-    post: function (request, context, response) {
+    httpPost: function (request, context) {
 
         if (typeof request.body == 'string') {
             request.body = JSON.parse(request.body);
@@ -103,29 +100,27 @@ let changeController = {
             saveRawRequest(request.body),
             ChangeModel.create(dataForStatistics),
         ]).then((values) => {
-            log('connection-before', sequelize);
-            sequelize.close();
-            log('connection-after', sequelize);
-            return response(null, values);
+            // return response(null, values);
+            return context.succeed(values);
         }).catch(error => {
-            return response(error, null);
+            return context.fail(error);
         });
     }
 };
 
-let guardTimestampFrom = function (request, response) {
+let guardTimestampFrom = function (request, context) {
     if (request.timestampFrom.length !== 0) {
         return request.timestampFrom;
     } else {
-        response('timestampFrom is required', null);
+        context.fail('timestampFrom is required');
     }
 };
 
-let guardTimestampTo = function (request, response) {
+let guardTimestampTo = function (request, context) {
     if (request.timestampTo.length !== 0) {
         return request.timestampTo;
     } else {
-        response('timestampTo is required', null);
+        context.fail('timestampTo is required');
     }
 };
 
@@ -139,7 +134,7 @@ let saveRawRequest = function (whatToSave) {
             if (err) {
                 reject(err);
             }
-            resolve('ok');
+            resolve(whatToSave);
         });
 
     });
@@ -150,22 +145,15 @@ let saveRawRequest = function (whatToSave) {
 let dataMapper = function (rawRequest) {
     var result = {};
 
-    result.currentTemp = get(rawRequest.body, 'thermostatInfo.currentTemp');
-    result.currentSetpoint = get(rawRequest.body, 'thermostatInfo.currentSetpoint');
-    result.currentDisplayTemp = get(rawRequest.body, 'thermostatInfo.currentDisplayTemp');
+    result.currentTemp = getPropertyOrNull(rawRequest.body, 'thermostatInfo.currentTemp');
+    result.currentSetpoint = getPropertyOrNull(rawRequest.body, 'thermostatInfo.currentSetpoint');
+    result.currentDisplayTemp = getPropertyOrNull(rawRequest.body, 'thermostatInfo.currentDisplayTemp');
 
     return result;
 };
 
-let get = function (obj, key) {
+let getPropertyOrNull = function (obj, key) {
     return key.split(".").reduce(function (o, x) {
         return (typeof o == "undefined" || o === null) ? o : o[x];
     }, obj);
 };
-
-
-
-let log = function (what, input) {
-    let description = '----TRACE--- ' + what + ' --';
-    console.log({'----TRACE--- ': input});
-}
