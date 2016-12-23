@@ -5,6 +5,7 @@ let uuid = require('node-uuid');
 let documentDB = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
 var Sequelize = require('sequelize');
 var sequelize = new Sequelize('mysql://homsterUser:homsterPass@homster.cpafon41kldv.eu-west-1.rds.amazonaws.com:3306/homster');
+var tableName = 'homster';
 
 // @todo: move this to src/config
 
@@ -80,13 +81,13 @@ let changeController = {
         // TODO: here suppose to be a factory, in order to support a few input types
         var dataForStatistics = dataMapper(request);
 
-        var responseMessage = {
-            "rawRequestHasBeenSaved": saveRawRequest(request.body).then(function () {
-                return 'ok';
-            })
-            // , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics)
-        };
-        response(null, responseMessage);
+        Promise.all([
+            saveRawRequest(request.body),
+        ]).then((values) => {
+            return response(null, values);
+        }).catch(error => {
+            return response(error, null);
+        });
     }
 };
 
@@ -107,9 +108,8 @@ let guardTimestampTo = function (request, response) {
 };
 
 let saveRawRequest = function (whatToSave) {
-
     whatToSave.id = uuid.v4();
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
         documentDB.put({
             Item: whatToSave,
             TableName: tableName
@@ -117,7 +117,7 @@ let saveRawRequest = function (whatToSave) {
             if (err) {
                 reject(err);
             }
-            resolve(data);
+            resolve('ok');
         });
 
     });
