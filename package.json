@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "mysql": "^2.12.0",
-    "node-uuid": "^1.4.7"
+    "node-uuid": "^1.4.7",
+    "sequelize": "^3.28.0"
   },
   "devDependencies": {
     "node-watch": "^0.4.1",

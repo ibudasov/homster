@@ -3,17 +3,10 @@
 let AWS = require('aws-sdk');
 let uuid = require('node-uuid');
 let documentDB = new AWS.DynamoDB.DocumentClient({region: 'eu-west-1'});
+var Sequelize = require('sequelize');
+var sequelize = new Sequelize('mysql://homsterUser:homsterPass@homster.cpafon41kldv.eu-west-1.rds.amazonaws.com:3306/homster');
 
 // @todo: move this to src/config
-let tableName = 'homster';
-let relationalDB = require('mysql');
-var connection = relationalDB.createConnection({
-    host: 'homster.cpafon41kldv.eu-west-1.rds.amazonaws.com',
-    user: 'homsterUser',
-    password: 'homsterPass',
-    port: '3306',
-    database: 'homster'
-});
 
 // @todo: move this to src/router
 exports.handle = (request, context, response) => {
@@ -85,19 +78,13 @@ let changeController = {
         }
 
         // TODO: here suppose to be a factory, in order to support a few input types
-        // var dataForStatistics = dataMapper(request);
-        var dataForStatistics = {
-            timestampReceived: 9999,
-            currentTemp: 9999,
-            currentSetpoint: 9999,
-            currentDisplayTemp: 9999
-        };
+        var dataForStatistics = dataMapper(request);
 
         var responseMessage = {
-            "rawRequestHasBeenSaved": saveRawRequest(request.body, response)
-            , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics, response).then(function(data){
+            "rawRequestHasBeenSaved": saveRawRequest(request.body).then(function () {
                 return 'ok';
             })
+            // , "dataForStatisticsHasBeenSaved": saveDataForStatistics(dataForStatistics)
         };
         response(null, responseMessage);
     }
@@ -119,44 +106,45 @@ let guardTimestampTo = function (request, response) {
     }
 };
 
-let saveRawRequest = function (whatToSave, response) {
+let saveRawRequest = function (whatToSave) {
 
     whatToSave.id = uuid.v4();
+    return new Promise(function (resolve, reject) {
+        documentDB.put({
+            Item: whatToSave,
+            TableName: tableName
+        }, function (err, data) {
+            if (err) {
+                reject(err);
+            }
+            resolve(data);
+        });
 
-    documentDB.put({
-        Item: whatToSave,
-        TableName: tableName
-    }, function (err, data) {
-        if (err) {
-            response(err, null);
-        }
     });
-    return 'ok';
 };
 
 // @todo: convert saving temperature to proper format
-let saveDataForStatistics = function (whatToSave, response) {
-    // INSERT INTO tbl_name (a,b,c) VALUES(1,2,3),(4,5,6),(7,8,9);
-
-    return new Promise(function (fulfill, reject) {
-        connection.query(
-            'INSERT INTO homster (timestampReceived, currentTemp, currentSetpoint, currentDisplayTemp)  VALUES (?, ?, ?, ?)',
-            [Math.floor(Date.now() / 1000), whatToSave.currentTemp, whatToSave.currentSetpoint, whatToSave.currentDisplayTemp],
-            function (error, data, fields) {
-                if (error) {
-                    reject(error);
-                }
-                else {
-                    connection.end(function (error, data) {
-                        if (error) {
-                            response(error, null);
-                        }
-                    });
-                    fulfill(data);
-                }
-            });
-    });
-};
+// let saveDataForStatistics = function (whatToSave) {
+//     var User = sequelize.define('user', {
+//         firstName: {
+//             type: Sequelize.STRING,
+//             field: 'first_name' // Will result in an attribute that is firstName when user facing but first_name in the database
+//         },
+//         lastName: {
+//             type: Sequelize.STRING
+//         }
+//     }, {
+//         freezeTableName: true // Model tableName will be the same as the model name
+//     });
+//
+//     User.sync({force: true}).then(function () {
+//         Table created
+// return User.create({
+//     firstName: 'John',
+//     lastName: 'Hancock'
+// });
+// });
+// };
 
 let dataMapper = function (rawRequest) {
     var result = {};
